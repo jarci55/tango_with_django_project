@@ -9,19 +9,42 @@
 
 	<body>
 		<h1>Rango says...</h1>
-		<div> hey there partner!</div>
+		
 		<div>
+		hey there partner!</div>
+		<div>
+		<a> Most Liked Categories</a>
 		{% if categories %}
 		<ul>	
 			{% for category in categories %}
-				<li>{{ category.name }}</li>
+			
+		<li>
+		<a href="/rango/category/{{category.slug }}">{{ category.name }} </a>
+		</li>
 			{% endfor %}
-		</ul>
-
+		</ul>		
 		{% else %}
 			<strong> There are no categories present.</strong>
 		{% endif %}	
 		</div>
+
+
+
+		<div>
+		<a> Most Viewed Pages </a>
+
+		{% if pages %}
+		<ul>	
+		{% for page in pages %}
+			<li><a href="{{ page.url }}">{{ page.title }}</a></li>
+		{% endfor %}
+		</ul>
+		{% else %}
+		<strong> No pages currently in category.</strong>
+		{% endif %}
+
+		</div>	
+
 
 		<div>
 		<!-- Image-->
