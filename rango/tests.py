@@ -8,61 +8,149 @@ import populate_rango
 
 
 
-class Chapter5ModelTests(TestCase):
 
-    def test_create_a_new_category(self):
-        cat = Category(name="Python")
-        cat.save()
 
-        # Check category is in database
-        categories_in_database = Category.objects.all()
-        self.assertEquals(len(categories_in_database), 1)
-        only_poll_in_database = categories_in_database[0]
-        self.assertEquals(only_poll_in_database, cat)
+class Chapter6ModelTests(TestCase):
+    def test_category_contains_slug_field(self):
+        #Create a new category
+        new_category = Category(name="Test Category")
+        new_category.save()
 
-    def test_create_pages_for_categories(self):
-        cat = Category(name="Python")
-        cat.save()
+        #Check slug was generated
+        self.assertEquals(new_category.slug, "test-category")
 
-        # create 2 pages for category python
-        python_page = Page()
-        python_page.category = cat
-        python_page.title="Official Python Tutorial"
-        python_page.url="http://docs.python.org/2/tutorial/"
-        python_page.save()
+        #Check there is only one category
+        categories = Category.objects.all()
+        self.assertEquals(len(categories), 1)
 
-        django_page = Page()
-        django_page.category = cat
-        django_page.title="Django"
-        django_page.url="https://docs.djangoproject.com/en/1.5/intro/tutorial01/"
-        django_page.save()
+        #Check attributes were saved correctly
+        categories[0].slug = new_category.slug
 
-        # Check if they both were saved
-        python_pages = cat.page_set.all()
-        self.assertEquals(python_pages.count(), 2)
 
-        #Check if they were saved properly
-        first_page = python_pages[0]
-        self.assertEquals(first_page, python_page)
-        self.assertEquals(first_page.title , "Official Python Tutorial")
-        self.assertEquals(first_page.url, "http://docs.python.org/2/tutorial/")
+class Chapter6ViewTests(TestCase):
+    def test_index_context(self):
+        # Access index with empty database
+        response = self.client.get(reverse('index'))
 
-    def test_population_script_changes(self):
-        #Populate database
-        populate_rango.populate()
+        # Context dictionary is then empty
+        self.assertCountEqual(response.context['categories'], [])
+        self.assertCountEqual(response.context['pages'], [])
 
-        # Check if the category has correct number of views and likes
-        cat = Category.objects.get(name='Python')
-        self.assertEquals(cat.views, 128)
-        self.assertEquals(cat.likes, 64)
+        categories = test_utils.create_categories()
+        test_utils.create_pages(categories)
 
-        # Check if the category has correct number of views and likes
-        cat = Category.objects.get(name='Django')
-        self.assertEquals(cat.views, 64)
-        self.assertEquals(cat.likes, 32)
+        #Access index with database filled
+        response = self.client.get(reverse('index'))
 
-        # Check if the category has correct number of views and likes
-        cat = Category.objects.get(name='Other Frameworks')
-        self.assertEquals(cat.views, 32)
-        self.assertEquals(cat.likes, 16)
+        #Retrieve categories and pages from database
+        categories = Category.objects.order_by('-likes')[:5]
+        pages = Page.objects.order_by('-views')[:5]
 
+        # Check context dictionary filled
+        self.assertCountEqual(response.context['categories'], categories)
+        self.assertCountEqual(response.context['pages'], pages)
+
+    def test_index_displays_five_most_liked_categories(self):
+        #Create categories
+        test_utils.create_categories()
+
+        # Access index
+        response = self.client.get(reverse('index'))
+
+        # Check if the 5 pages with most likes are displayed
+        for i in range(10, 5, -1):
+            self.assertIn("Category " + str(i), response.content.decode('ascii'))
+
+    def test_index_displays_no_categories_message(self):
+        # Access index with empty database
+        response = self.client.get(reverse('index'))
+
+        # Check if no categories message is displayed
+        self.assertIn("There are no categories present.".lower(), response.content.decode('ascii').lower())
+
+    def test_index_displays_five_most_viewed_pages(self):
+        #Create categories
+        categories = test_utils.create_categories()
+
+        #Create pages for categories
+        test_utils.create_pages(categories)
+
+        # Access index
+        response = self.client.get(reverse('index'))
+
+        # Check if the 5 pages with most views are displayed
+        for i in range(20, 15, -1):
+            self.assertIn("Page " + str(i), response.content.decode('ascii'))
+
+    def test_index_contains_link_to_categories(self):
+        #Create categories
+        categories = test_utils.create_categories()
+
+        # Access index
+        response = self.client.get(reverse('index'))
+
+        # Check if the 5 pages with most likes are displayed
+        for i in range(10, 5, -1):
+            category = categories[i - 1]
+            self.assertIn(reverse('show_category', args=[category.slug])[:-1], response.content.decode('ascii'))
+
+    def test_category_context(self):
+        #Create categories and pages for categories
+        categories = test_utils.create_categories()
+        pages = test_utils.create_pages(categories)
+
+        # For each category check the context dictionary passed via render() function
+        for category in categories:
+            response = self.client.get(reverse('show_category', args=[category.slug]))
+            pages = Page.objects.filter(category=category)
+            self.assertCountEqual(response.context['pages'], pages)
+            self.assertEquals(response.context['category'], category)
+
+    def test_category_page_using_template(self):
+        #Create categories in database
+        test_utils.create_categories()
+
+        # Access category page
+        response = self.client.get(reverse('show_category', args=['category-1']))
+
+        # check was used the right template
+        self.assertTemplateUsed(response, 'rango/category.html')
+
+
+    def test_category_page_displays_pages(self):
+        #Create categories in database
+        categories = test_utils.create_categories()
+
+        # Create pages for categories
+        test_utils.create_pages(categories)
+
+        # For each category, access its page and check for the pages associated with it
+        for category in categories:
+            # Access category page
+            response = self.client.get(reverse('show_category', args=[category.slug]))
+
+            # Retrieve pages for that category
+            pages = Page.objects.filter(category=category)
+
+            # Check pages are displayed and they have a link
+            for page in pages:
+                self.assertIn(page.title, response.content.decode('ascii'))
+                self.assertIn(page.url, response.content.decode('ascii'))
+
+    def test_category_page_displays_empty_message(self):
+        #Create categories in database
+        categories = test_utils.create_categories()
+
+        # For each category, access its page and check there are no pages associated with it
+        for category in categories:
+            # Access category page
+            response = self.client.get(reverse('show_category', args=[category.slug]))
+            self.assertIn("No pages currently in category.".lower(), response.content.decode('ascii').lower())
+
+    def test_category_page_displays_category_does_not_exist_message(self):
+        # Try to access categories not saved to database and check the message
+        response = self.client.get(reverse('show_category', args=['Python']))
+        self.assertIn("does not exist!".lower(), response.content.decode('ascii').lower())
+
+        response = self.client.get(reverse('show_category', args=['Django']))
+        self.assertIn("does not exist!".lower(), response.content.decode('ascii').lower())
