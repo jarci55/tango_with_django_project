@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 {% extends 'rango/base.html' %}
-<html>
-<head> 
-	<title> <h1> Add a New Page to {{category.slug}}</h1> </title>
-</head>
-<body>
-	<h2> Add a Page </h2>
+{% block title_block %} 
+ Add a new page to {{ category.slug }} 
+{% endblock %}
+{%block body_block %}
+
+	<h2> Add a new page to {{ category.slug }}</h2>
 	
 	<div><br />
 
@@ -27,5 +27,4 @@
 </form>
 		
 		{% endif %}
-</body>
-</html>	
+{% endblock %}	

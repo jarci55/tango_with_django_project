@@ -3,29 +3,29 @@
 {% load staticfiles %} 
 <html>
 
-	<head> 
-		<title> Rango</title>
-		
-	</head>
+	{% block title_block %}
+	Main Page				
+	{% endblock %}
 
-	<body>
+	{% block body_block %}
 		<h1>Rango says...</h1>
 		
-		<div>
-		hey there partner!</div>
+		<h2>hey there partner!</h2>
+		<br />
 		<div>
 		<a> Most Liked Categories</a>
 		{% if categories %}
 		<ul>	
 			{% for category in categories %}
-			
 		<li>
-		<a href="{& url 'show_category' category.slug }}">{{ category.name }} </a>
+			<a href="{% url 'rango:show_category' category.slug %}">
+			{{ category.name }} 
+			</a>
 		</li>
-			{% endfor %}
+		{% endfor %}
 		</ul>		
 		{% else %}
-			<strong> There are no categories present.</strong>
+		<strong> There are no categories present.</strong>
 		{% endif %}	
 		</div>
 
@@ -49,8 +49,7 @@
 
 		<div>
 		<!-- Image-->
-			<a href="{% url 'rango:about' %}">About</a><br />
+			
 			<img src="{% static "images/rango.jpg" %}" alt="Picture of Rango" /> 
 		</div>
-	</body>
-</html>	
+{% endblock %}

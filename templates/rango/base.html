@@ -3,7 +3,7 @@
 
 <html>
 	
-	<title> Rango - 
+	<title> Rango -
 	{% block title_block %}
 		How to tango with Django!
 	{% endblock %}
@@ -17,9 +17,9 @@
 	<hr />
 	<div>
 		<ul>
-			<li><a href="{% urls.add_category' %}">Add New Category</a></li>
-			<li><a href="{% urls.about' %}">About</a></li>
-			<li><a href="{% urls.index' %}">Index</a></li>
+			<li><a href="{% url 'rango:add_category' %}">Add New Category</a></li>
+			<li><a href="{% url 'rango:about' %}">About</a></li>
+			<li><a href="{% url 'rango:index' %}">Index</a></li>
 		</ul>
 	</div>
 	</body>

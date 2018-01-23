@@ -19,7 +19,7 @@ def index(request):
    return render(request, 'rango/index.html', context_dict)
 
 def about(request):
-   context_dict = {'boldmessage':'This tutorial has been put together by <Jaroslav Sak>'}
+   context_dict = {'boldmessage':'Rango says here is the about page.'}
    return render(request, 'rango/about.html', context=context_dict)
 
 def show_category(request, category_name_slug):
@@ -70,5 +70,6 @@ def add_page(request, category_name_slug):
             return show_category(request, category_name_slug)
       else:
          print(form.errors)
+         
    context_dict = {'form':form, 'category':category}      
    return render(request, 'rango/add_page.html', context_dict)
