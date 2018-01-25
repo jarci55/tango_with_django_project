@@ -19,133 +19,124 @@ from rango.decorators import chapter6
 from rango.decorators import chapter7
 from rango.forms import CategoryForm, PageForm
 
-# ===== Chapter 7
-class Chapter7ViewTests(TestCase):
-    @chapter7
-    def test_index_contains_link_to_add_category(self):
-        # Access index
-        try:
-            response = self.client.get(reverse('index'))
-        except:
-            try:
-                response = self.client.get(reverse('rango:index'))
-            except:
-                return False
+#Chapter 8
+from django.template import loader
+from django.conf import settings
+from rango.decorators import chapter8
+import os.path
 
-        # Check if there is text and a link to add category
-        self.assertIn('href="' + reverse('add_category') + '"', response.content.decode('ascii'))
+# ====== Chapter 8
+class Chapter8ViewTests(TestCase):
 
-    @chapter7
-    def test_add_category_form_is_displayed_correctly(self):
-        # Access add category page
-        response = self.client.get(reverse('add_category'))
+    def test_base_template_exists(self):
+        # Check base.html exists inside template folder
+        path_to_base = settings.TEMPLATE_DIR + '/rango/base.html'
+        print(path_to_base)
+        self.assertTrue(os.path.isfile(path_to_base))
 
-        # Check form in response context is instance of CategoryForm
-        self.assertTrue(isinstance(response.context['form'], CategoryForm))
+    @chapter8
+    def test_titles_displayed(self):
+        # Create user and log in
+        test_utils.create_user()
+        self.client.login(username='testuser', password='test1234')
 
-        # Check form is displayed correctly
-        # Header
-        self.assertIn('<h1>Add a Category</h1>'.lower(), response.content.decode('ascii').lower())
-
-        # Label
-        self.assertIn('Please enter the category name.'.lower(), response.content.decode('ascii').lower())
-
-        # Text input
-        self.assertIn('id="id_name"', response.content.decode('ascii'))
-        self.assertIn('maxlength="128"', response.content.decode('ascii'))
-        self.assertIn('name="name"', response.content.decode('ascii'))
-        self.assertIn('type="text"', response.content.decode('ascii'))
-
-        # Button
-        self.assertIn('type="submit" name="submit" value="Create Category"'.lower(), response.content.decode('ascii').lower())
-
-    @chapter7
-    def test_add_page_form_is_displayed_correctly(self):
         # Create categories
         categories = test_utils.create_categories()
 
-        for category in categories:
-            # Access add category page
-            try:
-                response = self.client.get(reverse('index'))
-                response = self.client.get(reverse('add_page', args=[category.slug]))
-            except:
-                try:
-                    response = self.client.get(reverse('rango:index'))
-                    response = self.client.get(reverse('rango:add_page', args=[category.slug]))
-                except:
-                    return False
+        # Access index and check the title displayed
+        response = self.client.get(reverse('index'))
+        self.assertIn('Rango -'.lower(), response.content.decode('ascii').lower())
 
-            # Check form in response context is instance of CategoryForm
-            self.assertTrue(isinstance(response.context['form'], PageForm))
+        # Access category page and check the title displayed
+        response = self.client.get(reverse('show_category', args=[categories[0].slug]))
+        self.assertIn(categories[0].name.lower(), response.content.decode('ascii').lower())
 
-            # Check form is displayed correctly
+        # Access about page and check the title displayed
+        response = self.client.get(reverse('about'))
+        self.assertIn('About'.lower(), response.content.decode('ascii').lower())
 
-            # Label 1
-            self.assertIn('Please enter the title of the page.'.lower(), response.content.decode('ascii').lower())
+        # Access login page and check the title displayed
+        response = self.client.get(reverse('login'))
+        self.assertIn('Login'.lower(), response.content.decode('ascii').lower())
 
-            # Label 2
-            self.assertIn('Please enter the URL of the page.'.lower(), response.content.decode('ascii').lower())
+        # Access register page and check the title displayed
+        response = self.client.get(reverse('register'))
+        self.assertIn('Register'.lower(), response.content.decode('ascii').lower())
 
-            # Text input 1
-            self.assertIn('id="id_title"'.lower(), response.content.decode('ascii').lower())
-            self.assertIn('maxlength="128"'.lower(), response.content.decode('ascii').lower())
-            self.assertIn('name="title"'.lower(), response.content.decode('ascii').lower())
-            self.assertIn('type="text"'.lower(), response.content.decode('ascii').lower())
+        # Access restricted page and check the title displayed
+        response = self.client.get(reverse('restricted'))
+        self.assertIn("Since you're logged in".lower(), response.content.decode('ascii').lower())
 
-            # Text input 2
-            self.assertIn('id="id_url"'.lower(), response.content.decode('ascii').lower())
-            self.assertIn('maxlength="200"'.lower(), response.content.decode('ascii').lower())
-            self.assertIn('name="url"'.lower(), response.content.decode('ascii').lower())
-            self.assertIn('type="url"'.lower(), response.content.decode('ascii').lower())
+        # Access add page and check the title displayed
+        response = self.client.get(reverse('add_page', args=[categories[0].slug]))
+        self.assertIn('Add Page'.lower(), response.content.decode('ascii').lower())
 
-            # Button
-            self.assertIn('type="submit" name="submit" value="Add Page"'.lower(), response.content.decode('ascii').lower())
+        # Access add new category page and check the title displayed
+        response = self.client.get(reverse('add_category'))
+        self.assertIn('Add Category'.lower(), response.content.decode('ascii').lower())
 
-    def test_access_category_that_does_not_exists(self):
-        # Access a category that does not exist
-        response = self.client.get(reverse('show_category', args=['python']))
+    @chapter8
+    def test_pages_using_templates(self):
+        # Create user and log in
+        test_utils.create_user()
+        self.client.login(username='testuser', password='test1234')
 
-        # Check that it has a response as status code OK is 200
-        self.assertEquals(response.status_code, 200)
-
-        # Check the rendered page is not empty, thus it was customised (I suppose)
-        self.assertNotEquals(response.content.decode('ascii'), '')
-
-    def test_link_to_add_page_only_appears_in_valid_categories(self):
-        # Access a category that does not exist
-        response = self.client.get(reverse('show_category', args=['python']))
-
-        # Check that there is not a link to add page
-        try:
-            self.assertNotIn(reverse('add_page', args=['python']), response.content.decode('ascii'))
-            # Access a category that does not exist
-            response = self.client.get(reverse('show_category', args=['other-frameworks']))
-            # Check that there is not a link to add page
-            self.assertNotIn(reverse('add_page', args=['other-frameworks']), response.content.decode('ascii'))
-        except:
-            try:
-                self.assertNotIn(reverse('rango:add_page', args=['python']), response.content.decode('ascii'))
-                # Access a category that does not exist
-                response = self.client.get(reverse('rango:show_category', args=['other-frameworks']))
-                # Check that there is not a link to add page
-                self.assertNotIn(reverse('rango:add_page', args=['other-frameworks']), response.content.decode('ascii'))
-            except:
-                return False
-
-    @chapter7
-    def test_category_contains_link_to_add_page(self):
-        # Crete categories
+        # Create categories
         categories = test_utils.create_categories()
+        # Create a list of pages to access
+        pages = [reverse('index'), reverse('about'), reverse('add_category'), reverse('register'), reverse('login'),
+                 reverse('show_category', args=[categories[0].slug]), reverse('add_page', args=[categories[0].slug])]#, reverse('restricted')]
 
-        # For each category in the database check if contains link to add page
-        for category in categories:
-            try:
-                response = self.client.get(reverse('show_category', args=[category.slug]))
-                self.assertIn(reverse('add_page', args=[category.slug]), response.content.decode('ascii'))
-            except:
-                try:
-                    response = self.client.get(reverse('rango:show_category', args=[category.slug]))
-                    self.assertIn(reverse('rango:add_page', args=[category.slug]), response.content.decode('ascii'))
-                except:
-                    return False
+        # Create a list of pages to access
+        templates = ['rango/index.html', 'rango/about.html', 'rango/add_category.html', 'rango/register.html',
+                     'rango/login.html','rango/category.html', 'rango/add_page.html']#, 'rango/restricted.html']
+
+        # For each page in the page list, check if it extends from base template
+        for template, page in zip(templates, pages):
+            response = self.client.get(page)
+            self.assertTemplateUsed(response, template)
+
+    @chapter8
+    def test_url_reference_in_index_page_when_logged(self):
+        # Create user and log in
+        test_utils.create_user()
+        self.client.login(username='testuser', password='test1234')
+
+        # Access index page
+        response = self.client.get(reverse('index'))
+
+        # Check links that appear for logged person only
+        self.assertIn(reverse('add_category'), response.content.decode('ascii'))
+        self.assertIn(reverse('restricted'), response.content.decode('ascii'))
+        self.assertIn(reverse('logout'), response.content.decode('ascii'))
+        self.assertIn(reverse('about'), response.content.decode('ascii'))
+
+    @chapter8
+    def test_url_reference_in_index_page_when_not_logged(self):
+        #Access index page with user not logged
+        response = self.client.get(reverse('index'))
+
+        # Check links that appear for logged person only
+        self.assertIn(reverse('register'), response.content.decode('ascii'))
+        self.assertIn(reverse('login'), response.content.decode('ascii'))
+        self.assertIn(reverse('about'), response.content.decode('ascii'))
+
+    def test_link_to_index_in_base_template(self):
+        # Access index
+        response = self.client.get(reverse('index'))
+
+        # Check for url referencing index
+        self.assertIn(reverse('index'), response.content.decode('ascii'))
+
+    @chapter8
+    def test_url_reference_in_category_page(self):
+        # Create user and log in
+        test_utils.create_user()
+        self.client.login(username='testuser', password='test1234')
+
+        # Create categories
+        test_utils.create_categories()
+
+        # Check for add_page in category page
+        response = self.client.get(reverse('show_category', args=['category-1']))
+        self.assertIn(reverse('add_page', args=['category-1']), response.content.decode('ascii'))
