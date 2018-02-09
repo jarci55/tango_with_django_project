@@ -31,6 +31,7 @@ STATICFILES_DIRS = [STATIC_DIR,]
 MEDIA_ROOT = MEDIA_DIR
 MEDIA_URL = '/media/'
 
+LOGIN_URL = '/rango/login/'
 
 
 # SECURITY WARNING: keep the secret key used in production secret!

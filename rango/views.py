@@ -9,7 +9,8 @@ from rango.forms import UserProfileForm
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
-
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
 
 
 def index(request):
@@ -103,6 +104,7 @@ def register(request):
 
 
 def user_login(request):
+
    if request.method == 'POST':
       username = request.POST.get('username')
       password = request.POST.get('password')
@@ -113,9 +115,21 @@ def user_login(request):
             login(request, user)
             return HttpResponseRedirect(reverse('index'))
          else:
-            return HttpResponse("Your Rango account is disabled.")
+            return render(request,'rango/login.html', {'disabled_account': True})
       else:
-         print("Invalid login details: {0}, {1}".format(username, password))
-         return HttpResponse("Invalid login details supplied.")
+            print ("Invalid login details: {0}, {1}".format(username, password))
+            return render(request,'rango/login.html', {'bad_details': True})
+        
    else:
       return render(request, 'rango/login.html', {})
+
+
+@login_required
+def restricted(request):
+   return render(request, 'rango/restricted.html', {})
+
+
+@login_required
+def user_logout(request):
+   logout(request)
+   return HttpResponseRedirect(reverse('index'))
