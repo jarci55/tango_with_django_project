@@ -1,3 +1,4 @@
+from django.shortcuts import render_to_response
 from django.shortcuts import render
 from django.http import HttpResponse
 from rango.models import Category
@@ -12,7 +13,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from datetime import datetime
-
+from django.template import RequestContext
 
 def index(request):
 
@@ -24,17 +25,16 @@ def index(request):
    visitor_cookie_handler(request)
    context_dict['visits'] = request.session['visits']
 
+   print(request.session['visits'])
+   
    response = render(request, 'rango/index.html', context=context_dict)
    return response
 
 def about(request):
-
-   if request.session.test_cookie_worked():
-      print("TEST COOKIE WORKED!")
-      request.session.delete_test_cookie()
-   print(request.method)
-   print(request.user)
-   return render(request, 'rango/about.html', {})
+   context_dict = {}
+   visitor_cookie_handler(request) 
+   context_dict['visits'] = request.session['visits']
+   return render(request, 'rango/about.html', context=context_dict)
 
 def show_category(request, category_name_slug):
    context_dict = {}
@@ -147,6 +147,8 @@ def get_server_side_cookie(request, cookie, default_val=None):
          val = default_val
       return val
 
+
+
 def visitor_cookie_handler(request):
       visits = int(request.COOKIES.get('visits', '1'))
       last_visit_cookie = request.COOKIES.get('last_visit', str(datetime.now()))
@@ -157,9 +159,10 @@ def visitor_cookie_handler(request):
          visits = visits + 1
          request.session['last_visit'] = str(datetime.now())
       else:
-         visits = 1
+         
          request.session['last_visit'] = last_visit_cookie
-         request.session ['visits'] = visits
+
+      request.session ['visits'] = visits
 
       
       
