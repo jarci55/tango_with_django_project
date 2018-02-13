@@ -1,3 +1,4 @@
+from registration.backends.simple.views import RegistrationView
 from django.shortcuts import render_to_response
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -86,7 +87,7 @@ def add_page(request, category_name_slug):
          
    context_dict = {'form':form, 'category':category}      
    return render(request, 'rango/add_page.html', context_dict)
-
+'''
 def register(request):
    registered = False
    if request.method == 'POST':
@@ -112,7 +113,7 @@ def register(request):
 
 def user_login(request):
 
-   if request.method == 'POST':
+  if request.method == 'POST':
       username = request.POST.get('username')
       password = request.POST.get('password')
       user = authenticate(username=username, password=password)
@@ -122,24 +123,24 @@ def user_login(request):
             login(request, user)
             return HttpResponseRedirect(reverse('index'))
          else:
-            return render(request,'rango/login.html', {'disabled_account': True})
+            return render(request,'rango/login.html', {'disabled_account': True})#
       else:
             print ("Invalid login details: {0}, {1}".format(username, password))
             return render(request,'rango/login.html', {'bad_details': True})
         
    else:
-      return render(request, 'rango/login.html', {})
-
+       return render(request, 'rango/login.html', {})
+'''
 
 @login_required
 def restricted(request):
    return render(request, 'rango/restricted.html', {})
 
 
-@login_required
-def user_logout(request):
-   logout(request)
-   return HttpResponseRedirect(reverse('index'))
+#@login_required
+#def user_logout(request):
+#   logout(request)
+#   return HttpResponseRedirect(reverse('index'))
 
 def get_server_side_cookie(request, cookie, default_val=None):
       val = request.session.get(cookie)
@@ -147,6 +148,9 @@ def get_server_side_cookie(request, cookie, default_val=None):
          val = default_val
       return val
 
+class MyRegistrationView(RegistrationView):
+   def get_success_url(self, user):
+      return '/rango/'
 
 
 def visitor_cookie_handler(request):
